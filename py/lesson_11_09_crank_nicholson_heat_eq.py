@@ -10,6 +10,7 @@ url: https://www.youtube.com/watch?v=FS4VHlLwXVc&list=PLbxFfU5GKZz3D4NPYvvY7dvXi
 """
 
 import numpy as np
+import matplotlib.pyplot as plt
 
 x_min = 0.0
 x_max = 1.0
