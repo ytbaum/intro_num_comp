@@ -21,6 +21,7 @@ lesson_11_09_crank_nicholson_heat_eq.py.
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.sparse import diags
+from matplotlib.animation import FuncAnimation
 
 x_min = -100.0
 x_max = 100.0
@@ -29,7 +30,7 @@ y_max = 100.0
 n = 9 # number of nodes along the domain
 num_interior_nodes = (n-2) * (n-2)
 h = (x_max - x_min) / (n-1) # we will have the same distance between nodes along the x and y directions
-dt = 1.0 # timestemp in seconds
+dt = 20.0 # timestemp in seconds
 
 f = lambda x, y: 1/np.sqrt(2*np.pi) * np.exp(-0.5 * ((x**2)+(y**2))) # initial condition
 x = np.linspace(x_min, x_max, n)
@@ -116,12 +117,21 @@ def get_w_t_half(z, n, RHS_mat):
 LHS_mat = get_LHS_mat(num_interior_nodes)
 LHS_inv = np.linalg.inv(LHS_mat.toarray())
 RHS_mat = get_RHS_mat(num_interior_nodes)
-z = z_t0
+z = z_t0.copy()
 
-times_to_plot = [0, 50, 100, 200]
-for k in range(200):
+### Generate Animated Gif ###
 
+fig, ax = plt.subplots()
+fig.set_tight_layout(True)
+print('fig size: {0} DPI, size in inches {1}'.format(fig.get_dpi(), fig.get_size_inches()))
+
+def update(i):
+
+    global z, n, RHS_mat, LHS_inv, x, x_grid, y, y_grid, fig, ax
     # first of the two "alternating directions"
+
+    if i == 0:
+        z = z_t0.copy()
 
     w_t = get_w_t(z, n, RHS_mat)
     interior_nodes = LHS_inv.dot(w_t)
@@ -134,14 +144,6 @@ for k in range(200):
     z[x_grid == x.max()] = right_bound
     z[y_grid == y.max()] = top_bound
     z[y_grid == y.min()] = bottom_bound
-
-#    # plot z
-#    plt.figure()
-#    plt.contourf(x_grid, y_grid, z, 25, cmap = "Reds")
-#    plt.title("Value of the target function z(x,y) at t=1/2")
-#    plt.xlabel("X")
-#    plt.ylabel("Y")
-#    plt.colorbar()
 
     # second of the two "alternating directions
 
@@ -157,13 +159,19 @@ for k in range(200):
     z[y_grid == y.max()] = top_bound
     z[y_grid == y.min()] = bottom_bound
 
-    # plot z
-    t = k+1
-    if t in times_to_plot:
-        plt.figure()
-        plt.contourf(x_grid, y_grid, z, 25, cmap = "Reds")
-        plt.title("Value of the target function z(x,y) at t=" + str(t))
-        plt.xlabel("X")
-        plt.ylabel("Y")
-        plt.colorbar()
+    # Generate image for this frame of the gif #
 
+    label = 'timestep {0}'.format(i)
+    print(label)
+
+    c_plot = ax.contourf(x_grid, y_grid, z, 25, cmap = "Reds")
+    plt.title("Value of the target function z(x,y) at t=" + str(i*dt))
+    plt.xlabel("X")
+    plt.ylabel("Y")
+    #fig.colorbar(c_plot)
+
+    return ax
+
+anim = FuncAnimation(fig, update, frames = np.arange(10), interval = 750)
+gif_name = "C:/Users/user/Documents/test/test_gif.gif"
+anim.save(gif_name)
