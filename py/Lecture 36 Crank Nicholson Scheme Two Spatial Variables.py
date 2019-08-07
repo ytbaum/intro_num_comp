@@ -30,7 +30,9 @@ y_max = 100.0
 n = 9 # number of nodes along the domain
 num_interior_nodes = (n-2) * (n-2)
 h = (x_max - x_min) / (n-1) # we will have the same distance between nodes along the x and y directions
-dt = 20.0 # timestemp in seconds
+num_levels = 20 # number of levels to divide the contour plot into
+num_frames = 25 # number of frames to include in the animation
+dt = 5 # timestemp in seconds
 
 f = lambda x, y: 1/np.sqrt(2*np.pi) * np.exp(-0.5 * ((x**2)+(y**2))) # initial condition
 x = np.linspace(x_min, x_max, n)
@@ -39,11 +41,12 @@ x_grid, y_grid = np.meshgrid(x, y)
 z_t0 = f(x_grid, y_grid)
 
 plt.figure()
-plt.contourf(x_grid, y_grid, z_t0, 25, cmap = "Reds")
+qcs = plt.contourf(x_grid, y_grid, z_t0, num_levels, cmap = "Reds")
+levels = qcs.levels.copy()
 plt.title("Initial value of the target function z(x,y)")
 plt.xlabel("X")
 plt.ylabel("Y")
-plt.colorbar()
+cb = plt.colorbar()
 
 # boundary conditions
 left_bound = z_t0[x_grid == x.min()]
@@ -127,7 +130,7 @@ print('fig size: {0} DPI, size in inches {1}'.format(fig.get_dpi(), fig.get_size
 
 def update(i):
 
-    global z, n, RHS_mat, LHS_inv, x, x_grid, y, y_grid, fig, ax
+    global z, n, RHS_mat, LHS_inv, x, x_grid, y, y_grid
     # first of the two "alternating directions"
 
     if i == 0:
@@ -164,14 +167,20 @@ def update(i):
     label = 'timestep {0}'.format(i)
     print(label)
 
-    c_plot = ax.contourf(x_grid, y_grid, z, 25, cmap = "Reds")
+    # apparently the colorbar is stored as another axes. in this case it will be the last axes under the current figure, since it is the last thing that was plotted.
+    # remove it so that it's no longer there when I add an updated colorbar for the updated contour plot
+    for a in fig.axes:
+        a.remove()
+
+    c_plot = plt.contourf(x_grid, y_grid, z, levels, cmap = "Reds")
     plt.title("Value of the target function z(x,y) at t=" + str(i*dt))
     plt.xlabel("X")
     plt.ylabel("Y")
-    #fig.colorbar(c_plot)
+    fig.colorbar(c_plot)
 
     return ax
 
-anim = FuncAnimation(fig, update, frames = np.arange(10), interval = 750)
+anim = FuncAnimation(fig, update, frames = np.arange(num_frames), interval = 750)
+#plt.show()
 gif_name = "C:/Users/user/Documents/test/test_gif.gif"
 anim.save(gif_name)
